@@ -9,6 +9,9 @@ import {
   generateAlbumPrompts,
   formatPromptsForCLI,
 } from "./lib/prompt-generator.js";
+import { analyzeAudioFile } from "./analyzers/audio-analyzer.js";
+import { analyzeWithGemini } from "./analyzers/gemini-analyzer.js";
+import { getCamelotKey } from "./lib/camelot-wheel.js";
 import type { CamelotKey, GenerateOptions } from "./types/index.js";
 
 const program = new Command();
@@ -21,19 +24,91 @@ program
 program
   .command("generate")
   .description("Generate Suno prompts for a 10-track focus album")
+  .option("-s, --source <path>", "Audio file to analyze for inspiration")
   .option("-n, --name <name>", "Album name", "Focus Session")
-  .option("-k, --start-key <key>", "Starting Camelot key (e.g., 1A)", "1A")
-  .option("--start-bpm <bpm>", "Starting BPM", "60")
-  .option("--peak-bpm <bpm>", "Peak BPM", "85")
+  .option("-k, --start-key <key>", "Starting Camelot key (e.g., 1A)")
+  .option("--start-bpm <bpm>", "Starting BPM")
+  .option("--peak-bpm <bpm>", "Peak BPM")
   .option("-o, --output <dir>", "Output directory", "./output")
-  .action((options: GenerateOptions) => {
+  .action(async (options: GenerateOptions) => {
+    let startBPM = 60;
+    let peakBPM = 85;
+    let startKey: CamelotKey = "1A";
+
+    if (options.source) {
+      const spinner = ora("Analyzing audio file...").start();
+
+      try {
+        const analysis = await analyzeAudioFile(options.source);
+
+        if (!analysis) {
+          spinner.fail("Audio analysis failed");
+          console.log(
+            chalk.yellow("\n⚠️  Continuing with default settings...\n"),
+          );
+        } else {
+          spinner.succeed(
+            `Analyzed audio: ${analysis.tempo} BPM, ${analysis.key}`,
+          );
+
+          const geminiSpinner = ora(
+            "Getting AI insights from Gemini...",
+          ).start();
+          const geminiAnalysis = await analyzeWithGemini(analysis);
+          geminiSpinner.succeed("AI analysis complete!");
+
+          console.log(chalk.cyan("\n📊 Audio Analysis:"));
+          console.log(chalk.gray(`   Detected Tempo: ${analysis.tempo} BPM`));
+          console.log(chalk.gray(`   Detected Key: ${analysis.key}`));
+          console.log(
+            chalk.gray(
+              `   Energy Level: ${(analysis.energy * 100).toFixed(0)}%`,
+            ),
+          );
+
+          console.log(chalk.cyan("\n🤖 AI Insights:"));
+          console.log(chalk.gray(`   Mood: ${geminiAnalysis.mood.join(", ")}`));
+          console.log(chalk.gray(`   Style: ${geminiAnalysis.style}`));
+          console.log(
+            chalk.gray(
+              `   Instruments: ${geminiAnalysis.instruments.join(", ")}`,
+            ),
+          );
+          console.log(
+            chalk.gray(`   Atmosphere: ${geminiAnalysis.atmosphere}`),
+          );
+          console.log(
+            chalk.gray(
+              `   Suggested BPM Range: ${geminiAnalysis.suggestedBPMRange.min}-${geminiAnalysis.suggestedBPMRange.max}\n`,
+            ),
+          );
+
+          startBPM = geminiAnalysis.suggestedBPMRange.min;
+          peakBPM = geminiAnalysis.suggestedBPMRange.max;
+
+          const detectedCamelotKey = getCamelotKey(analysis.key as any);
+          if (detectedCamelotKey) {
+            startKey = detectedCamelotKey;
+          }
+        }
+      } catch (error) {
+        spinner.fail("Analysis error");
+        console.error(
+          chalk.red(error instanceof Error ? error.message : "Unknown error"),
+        );
+        console.log(
+          chalk.yellow("\n⚠️  Continuing with default settings...\n"),
+        );
+      }
+    }
+
+    if (options.startBPM) startBPM = parseInt(options.startBPM.toString());
+    if (options.peakBPM) peakBPM = parseInt(options.peakBPM.toString());
+    if (options.startKey) startKey = options.startKey as CamelotKey;
+
     const spinner = ora("Designing focus session arc...").start();
 
     try {
-      const startBPM = parseInt(options.startBPM?.toString() || "60");
-      const peakBPM = parseInt(options.peakBPM?.toString() || "85");
-      const startKey = (options.startKey || "1A") as CamelotKey;
-
       const arc = designFocusArc({
         startBPM,
         peakBPM,
@@ -63,6 +138,7 @@ program
         createdAt: new Date().toISOString(),
         totalTracks: arc.length,
         totalDuration: arc.reduce((sum, t) => sum + t.duration, 0),
+        inspirationSource: options.source,
         arc,
         prompts,
       };
@@ -83,6 +159,42 @@ program
       );
     } catch (error) {
       spinner.fail("Failed to generate prompts");
+      console.error(
+        chalk.red(error instanceof Error ? error.message : "Unknown error"),
+      );
+      process.exit(1);
+    }
+  });
+
+program
+  .command("analyze")
+  .description("Analyze an audio file (test the AI analysis)")
+  .argument("<file>", "Audio file path")
+  .action(async (file: string) => {
+    const spinner = ora("Analyzing audio...").start();
+
+    try {
+      const analysis = await analyzeAudioFile(file);
+
+      if (!analysis) {
+        spinner.fail("Analysis failed");
+        process.exit(1);
+      }
+
+      spinner.succeed("Audio analysis complete!");
+
+      console.log(chalk.cyan("\n📊 Technical Analysis:"));
+      console.log(JSON.stringify(analysis, null, 2));
+
+      const geminiSpinner = ora("Getting AI insights...").start();
+      const geminiAnalysis = await analyzeWithGemini(analysis);
+      geminiSpinner.succeed("AI analysis complete!");
+
+      console.log(chalk.cyan("\n🤖 AI Insights:"));
+      console.log(JSON.stringify(geminiAnalysis, null, 2));
+      console.log("");
+    } catch (error) {
+      spinner.fail("Analysis failed");
       console.error(
         chalk.red(error instanceof Error ? error.message : "Unknown error"),
       );

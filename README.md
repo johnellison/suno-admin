@@ -16,9 +16,20 @@ Creates **10-track focus session albums** with:
 ```bash
 # Install dependencies
 npm install
+pip3 install -r requirements.txt  # For audio analysis
 
-# Generate album prompts
+# Set up Gemini API (optional, for AI insights)
+cp .env.example .env
+# Add your GEMINI_API_KEY to .env
+
+# Generate album prompts (default settings)
 npm run generate
+
+# 🎯 AI-Powered: Analyze audio and generate inspired prompts
+npm run generate -- --source ../suno-inspiration/samples-4min/Healing\ Frequency\ 1111Hz\ -\ 4min\ sample.mp3
+
+# Test audio analysis
+npm run analyze ../suno-inspiration/samples-4min/your-audio.mp3
 
 # Preview arc structure
 npm run generate -- --preview
@@ -41,6 +52,36 @@ Track 07  🔥  7A   85 BPM  █████████████████
 Track 10  ✨  12A  60 BPM  ████████████
          LANDING     low
          Complete the cycle, rest and reflect
+```
+
+## 🤖 NEW: AI-Powered Audio Analysis
+
+**Analyze existing audio files** to generate prompts inspired by their vibe:
+
+```bash
+npm run generate -- --source /path/to/your/audio.mp3
+```
+
+**What it does:**
+
+1. **Audio Analysis** (Python/librosa): Detects BPM, key, energy, brightness
+2. **AI Insights** (Gemini 2.0): Analyzes mood, style, instruments, atmosphere
+3. **Smart Prompts**: Generates Suno prompts that match the source music's character
+
+**Example output:**
+
+```
+📊 Audio Analysis:
+   Detected Tempo: 72 BPM
+   Detected Key: Bm
+   Energy Level: 45%
+
+🤖 AI Insights:
+   Mood: meditative, grounding, peaceful
+   Style: ambient handpan with nature soundscape
+   Instruments: handpan, soft pads, gentle percussion
+   Atmosphere: Calming and centering, perfect for deep focus
+   Suggested BPM Range: 65-78
 ```
 
 ## 🎵 How It Works
@@ -76,18 +117,25 @@ Creates Suno-optimized prompts with:
 ## 💻 CLI Commands
 
 ```bash
-# Generate full album with prompts
-npm run generate
+# Generate with AI analysis (recommended!)
+npm run generate -- --source /path/to/audio.mp3
 
-# Options:
-#   -n, --name <name>        Album name (default: "Focus Session")
-#   -k, --start-key <key>    Starting Camelot key (default: "1A")
-#   --start-bpm <bpm>        Starting BPM (default: 60)
-#   --peak-bpm <bpm>         Peak BPM (default: 85)
-#   -o, --output <dir>       Output directory (default: "./output")
+# Generate with manual settings
+npm run generate -- --name "Deep Work" --start-key 5A --peak-bpm 90
 
-# Preview arc without generating prompts
+# Test audio analysis
+npm run analyze /path/to/audio.mp3
+
+# Preview arc structure
 npm run generate -- --preview
+
+# Full options:
+#   -s, --source <path>      Audio file to analyze for inspiration
+#   -n, --name <name>        Album name (default: "Focus Session")
+#   -k, --start-key <key>    Starting Camelot key (overrides analysis)
+#   --start-bpm <bpm>        Starting BPM (overrides analysis)
+#   --peak-bpm <bpm>         Peak BPM (overrides analysis)
+#   -o, --output <dir>       Output directory (default: "./output")
 ```
 
 ## 📂 Project Structure
@@ -122,10 +170,12 @@ suno-admin/
 
 ## 🔮 Roadmap
 
-- [ ] Audio analysis (YouTube → BPM/key detection)
-- [ ] AI-powered mood analysis (Gemini/OpenAI)
+- [x] Audio analysis (BPM/key detection with librosa)
+- [x] AI-powered mood analysis (Gemini 2.0 Flash)
+- [ ] YouTube download integration (yt-dlp)
 - [ ] Web admin panel
 - [ ] Direct integration with Pravos.xyz
+- [ ] Batch processing (analyze multiple files at once)
 
 ## 📝 License
 
