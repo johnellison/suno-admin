@@ -38,6 +38,18 @@ npm run generate -- --preview
 npm run generate -- --name "Deep Work Session" --start-key 5A --peak-bpm 90
 ```
 
+## 🎨 Beautiful TUI Experience
+
+Enjoy a **musician-worthy CLI experience** with gorgeous animations and gradient colors:
+
+- 🌊 **Animated sound wave intro** - Purple & pink gradients welcome you
+- 📦 **Boxed album reveals** - Track names displayed in stunning bordered boxes
+- 🎵 **Musical note outro** - Celebration animation when generation completes
+- ⚡ **Frequency banners** - Sacred frequency conversion with ASCII art
+- 🌈 **Gradient styling** - Purple, pink, and blue color themes throughout
+
+**The CLI feels like a piece of art, not just a technical tool.**
+
 ## 📋 Output Example
 
 ```
@@ -265,6 +277,7 @@ npm run convert suno-tracks/ -- --frequency 1111 --output album-1111hz/
 - [x] AI-powered mood analysis (Gemini 2.0 Flash)
 - [x] Creative track & album naming (Gemini-powered)
 - [x] Sacred frequency converter (432Hz, 444Hz, 528Hz, 1111Hz, etc.)
+- [x] Beautiful TUI effects (animated intro, boxed reveals, gradient colors)
 - [ ] YouTube download integration (yt-dlp)
 - [ ] Web admin panel
 - [ ] Direct integration with Pravos.xyz
