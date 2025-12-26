@@ -96,17 +96,11 @@ function selectMoods(phase: FocusPhase, count: number = 3): string {
   return selected.join(", ");
 }
 
-export function generateSunoPrompt(track: FocusTrack): SunoPrompt {
-  const phaseNames: Record<FocusPhase, string> = {
-    arrival: "Opening",
-    engage: "Activation",
-    flow: "Deep Flow",
-    lockin: "Peak Focus",
-    easeoff: "Integration",
-    landing: "Completion",
-  };
-
-  const title = `${phaseNames[track.phase]} ${track.number}`;
+export function generateSunoPrompt(
+  track: FocusTrack,
+  trackName?: string,
+): SunoPrompt {
+  const title = trackName || `Track ${track.number}`;
   const moods = selectMoods(track.phase);
   const instruments = INSTRUMENT_LAYERS[track.phase];
 
@@ -153,8 +147,13 @@ const PHASE_MAP_PURPOSE: Record<number, string> = {
   10: "Complete the cycle, rest and reflect",
 };
 
-export function generateAlbumPrompts(tracks: FocusTrack[]): SunoPrompt[] {
-  return tracks.map((track) => generateSunoPrompt(track));
+export function generateAlbumPrompts(
+  tracks: FocusTrack[],
+  trackNames?: string[],
+): SunoPrompt[] {
+  return tracks.map((track, index) =>
+    generateSunoPrompt(track, trackNames?.[index]),
+  );
 }
 
 export function formatPromptsForCLI(prompts: SunoPrompt[]): string {

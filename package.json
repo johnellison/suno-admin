@@ -12,7 +12,9 @@
     "dev": "tsx watch src/cli.ts",
     "start": "node dist/cli.js",
     "generate": "tsx src/cli.ts generate",
-    "analyze": "tsx src/cli.ts analyze"
+    "analyze": "tsx src/cli.ts analyze",
+    "convert": "tsx src/cli.ts convert",
+    "frequencies": "tsx src/cli.ts frequencies"
   },
   "keywords": [
     "suno",

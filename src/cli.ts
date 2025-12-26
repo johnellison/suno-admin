@@ -119,8 +119,24 @@ program
 
       console.log(chalk.cyan("\n" + visualizeArc(arc)));
 
+      spinner.start("Generating creative names...");
+      const { generateCreativeNames } = await import(
+        "./lib/creative-naming.js"
+      );
+      const phaseSequence = arc.map((t) => t.phase);
+      const creativeNames = await generateCreativeNames(
+        phaseSequence,
+        options.source,
+      );
+      spinner.succeed(`Album: "${creativeNames.album}"`);
+
+      console.log(chalk.magenta("\n🎨 Track Names:"));
+      creativeNames.tracks.forEach((name, i) => {
+        console.log(chalk.gray(`   ${i + 1}. ${name}`));
+      });
+
       spinner.start("Generating Suno prompts...");
-      const prompts = generateAlbumPrompts(arc);
+      const prompts = generateAlbumPrompts(arc, creativeNames.tracks);
       spinner.succeed(`Generated ${prompts.length} Suno prompts!`);
 
       const outputDir = options.output || "./output";
@@ -129,12 +145,13 @@ program
       }
 
       const timestamp = new Date().toISOString().split("T")[0];
-      const albumName = options.name || "Focus Session";
+      const albumName = options.name || creativeNames.album;
       const fileName = `${albumName.toLowerCase().replace(/\s+/g, "-")}-${timestamp}.json`;
       const filePath = join(outputDir, fileName);
 
       const albumData = {
         name: albumName,
+        trackNames: creativeNames.tracks,
         createdAt: new Date().toISOString(),
         totalTracks: arc.length,
         totalDuration: arc.reduce((sum, t) => sum + t.duration, 0),
@@ -220,6 +237,85 @@ program
     });
 
     console.log(chalk.cyan(visualizeArc(arc)));
+  });
+
+program
+  .command("convert")
+  .description(
+    "Convert audio to sacred frequencies (432Hz, 444Hz, 528Hz, 1111Hz, etc.)",
+  )
+  .argument("<input>", "Input audio file or directory")
+  .option(
+    "-f, --frequency <freq>",
+    "Target frequency (432, 444, 528, 639, 741, 852, 963, 1111)",
+    "432",
+  )
+  .option("-o, --output <path>", "Output file or directory")
+  .action(
+    async (input: string, options: { frequency: string; output?: string }) => {
+      const {
+        convertToSacredFrequency,
+        convertAlbumToFrequency,
+        listSacredFrequencies,
+      } = await import("./lib/frequency-converter.js");
+      const { statSync } = await import("fs");
+
+      const targetFreq = parseInt(options.frequency) as any;
+      const validFreqs = [432, 444, 528, 639, 741, 852, 963, 1111];
+
+      if (!validFreqs.includes(targetFreq)) {
+        console.error(chalk.red(`❌ Invalid frequency: ${targetFreq}`));
+        console.log(chalk.yellow("\nValid frequencies:"));
+        listSacredFrequencies();
+        process.exit(1);
+      }
+
+      const spinner = ora("Converting to sacred frequency...").start();
+
+      try {
+        const isDirectory = statSync(input).isDirectory();
+
+        if (isDirectory) {
+          spinner.stop();
+          const outputDir = options.output || `${input}-${targetFreq}hz`;
+          await convertAlbumToFrequency(input, outputDir, targetFreq);
+        } else {
+          const outputFile =
+            options.output ||
+            input.replace(/\.(mp3|wav)$/, `-${targetFreq}hz.$1`);
+          const result = await convertToSacredFrequency({
+            inputFile: input,
+            outputFile,
+            targetFrequency: targetFreq,
+          });
+
+          if (result.success) {
+            spinner.succeed(
+              `Converted to ${targetFreq}Hz: ${result.outputFile}`,
+            );
+          } else {
+            spinner.fail(`Conversion failed: ${result.error}`);
+            process.exit(1);
+          }
+        }
+      } catch (error) {
+        spinner.fail("Conversion failed");
+        console.error(
+          chalk.red(error instanceof Error ? error.message : "Unknown error"),
+        );
+        process.exit(1);
+      }
+    },
+  );
+
+program
+  .command("frequencies")
+  .description("List all available sacred frequencies")
+  .action(async () => {
+    const { listSacredFrequencies } = await import(
+      "./lib/frequency-converter.js"
+    );
+    listSacredFrequencies();
   });
 
 program.parse();
