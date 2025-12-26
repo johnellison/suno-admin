@@ -14,9 +14,13 @@ Creates **10-track focus session albums** with:
 ## 🚀 Quick Start
 
 ```bash
-# Install dependencies
+# Install Node.js dependencies
 npm install
-pip3 install -r requirements.txt  # For audio analysis
+
+# Install Python dependencies (for audio analysis)
+python3 -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
 
 # Set up Gemini API (optional, for AI insights)
 cp .env.example .env

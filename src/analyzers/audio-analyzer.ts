@@ -25,8 +25,10 @@ export async function analyzeAudioFile(
 ): Promise<AudioAnalysis | null> {
   try {
     const scriptPath = join(__dirname, "../../scripts/analyze-audio.py");
+    const projectRoot = join(__dirname, "../..");
+    const venvPython = join(projectRoot, "venv/bin/python3");
 
-    const { stdout } = await execa("python3", [scriptPath, filePath]);
+    const { stdout } = await execa(venvPython, [scriptPath, filePath]);
     const result: PythonAnalysisResult = JSON.parse(stdout);
 
     if (!result.success || !result.tempo || !result.key) {
