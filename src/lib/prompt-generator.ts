@@ -76,12 +76,17 @@ const MOOD_MAP: Record<FocusPhase, string[]> = {
 };
 
 const INSTRUMENT_LAYERS: Record<FocusPhase, string> = {
-  arrival: "soft handpan, ambient pads, subtle nature sounds",
-  engage: "handpan melody, light percussion, atmospheric layers",
-  flow: "rich handpan, rhythmic elements, ambient textures, deep bass",
-  lockin: "dynamic handpan, driving percussion, layered soundscape",
-  easeoff: "melodic handpan, fading rhythm, soft pads returning",
-  landing: "gentle handpan, ambient drones, nature sounds, space",
+  arrival:
+    "soft acoustic handpan, natural resonance, subtle nature sounds, organic tones",
+  engage:
+    "acoustic handpan melody, gentle natural percussion, warm atmospheric layers",
+  flow: "rich acoustic handpan, metallic resonance, natural rhythmic elements, deep organic bass",
+  lockin:
+    "dynamic acoustic handpan, natural percussion, layered organic soundscape",
+  easeoff:
+    "melodic acoustic handpan, fading natural rhythm, warm organic textures",
+  landing:
+    "gentle acoustic handpan, natural drones, nature sounds, spacious organic atmosphere",
 };
 
 function formatDuration(seconds: number): string {
@@ -115,8 +120,9 @@ export function generateSunoPrompt(
 
   const prompt = `
 [${track.targetKey}] [${track.targetBPM} BPM]
-${moods} handpan meditation music,
+${moods} acoustic handpan meditation music,
 ${instruments},
+natural organic sounds, metallic handpan resonance,
 deep focus music, ambient soundscape,
 seamless loop structure, no vocals, instrumental only,
 smooth harmonic ${track.transition} transition,
@@ -134,7 +140,7 @@ professional production, high quality mixing
     style: "meditation, ambient, handpan, focus music, deep work, instrumental",
     instrumental: true,
     excludeStyles:
-      "vocals, singing, lyrics, drums, heavy percussion, bass drops, aggressive sounds",
+      "vocals, singing, lyrics, drums, heavy percussion, bass drops, aggressive sounds, synthesizers, synth pads, electronic pads, digital sounds, artificial sounds, high-pitched synths, synthetic instruments, electric sounds, keyboard, electric piano",
     weirdness: WEIRDNESS_MAP[track.phase],
     styleInfluence: 75,
     _metadata: {
