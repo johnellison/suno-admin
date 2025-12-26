@@ -3,7 +3,6 @@ import type {
   FocusTrack,
   FocusPhase,
   EnergyLevel,
-  CamelotKey,
 } from "../types/index.js";
 import {
   getMusicalKey,

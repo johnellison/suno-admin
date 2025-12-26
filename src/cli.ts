@@ -31,6 +31,11 @@ program
   .option("--peak-bpm <bpm>", "Peak BPM")
   .option("-o, --output <dir>", "Output directory", "./output")
   .action(async (options: GenerateOptions) => {
+    const { showIntro, showAlbumReveal, showOutro } = await import(
+      "./lib/tui-effects.js"
+    );
+
+    await showIntro();
     let startBPM = 60;
     let peakBPM = 85;
     let startKey: CamelotKey = "1A";
@@ -128,12 +133,9 @@ program
         phaseSequence,
         options.source,
       );
-      spinner.succeed(`Album: "${creativeNames.album}"`);
+      spinner.succeed("Creative names generated!");
 
-      console.log(chalk.magenta("\n🎨 Track Names:"));
-      creativeNames.tracks.forEach((name, i) => {
-        console.log(chalk.gray(`   ${i + 1}. ${name}`));
-      });
+      await showAlbumReveal(creativeNames.album, creativeNames.tracks);
 
       spinner.start("Generating Suno prompts...");
       const prompts = generateAlbumPrompts(arc, creativeNames.tracks);
@@ -166,11 +168,7 @@ program
 
       console.log(formatPromptsForCLI(prompts));
 
-      console.log(
-        chalk.yellow(
-          "\n📌 TIP: Copy each prompt above and paste into suno.com",
-        ),
-      );
+      await showOutro();
       console.log(
         chalk.yellow("   Make sure to set: Instrumental=true, Vocals=false\n"),
       );
@@ -258,6 +256,7 @@ program
         convertAlbumToFrequency,
         listSacredFrequencies,
       } = await import("./lib/frequency-converter.js");
+      const { showFrequencyBanner } = await import("./lib/tui-effects.js");
       const { statSync } = await import("fs");
 
       const targetFreq = parseInt(options.frequency) as any;
@@ -269,6 +268,19 @@ program
         listSacredFrequencies();
         process.exit(1);
       }
+
+      const freqNames: Record<number, string> = {
+        432: "Natural Tuning",
+        444: "Spiritual Clarity",
+        528: "Love Frequency",
+        639: "Connection",
+        741: "Awakening",
+        852: "Intuition",
+        963: "Divine Connection",
+        1111: "Manifestation",
+      };
+
+      await showFrequencyBanner(targetFreq, freqNames[targetFreq]);
 
       const spinner = ora("Converting to sacred frequency...").start();
 
