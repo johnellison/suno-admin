@@ -123,6 +123,9 @@ export interface SunoPrompt {
   prompt: string;
   style: string;
   instrumental: boolean;
+  excludeStyles: string;
+  weirdness: number;
+  styleInfluence: number;
   _metadata: {
     phase: FocusPhase;
     energy: EnergyLevel;

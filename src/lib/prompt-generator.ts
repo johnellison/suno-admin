@@ -96,6 +96,15 @@ function selectMoods(phase: FocusPhase, count: number = 3): string {
   return selected.join(", ");
 }
 
+const WEIRDNESS_MAP: Record<FocusPhase, number> = {
+  arrival: 5,
+  engage: 10,
+  flow: 15,
+  lockin: 20,
+  easeoff: 12,
+  landing: 5,
+};
+
 export function generateSunoPrompt(
   track: FocusTrack,
   trackName?: string,
@@ -124,6 +133,10 @@ professional production, high quality mixing
     prompt,
     style: "meditation, ambient, handpan, focus music, deep work, instrumental",
     instrumental: true,
+    excludeStyles:
+      "vocals, singing, lyrics, drums, heavy percussion, bass drops, aggressive sounds",
+    weirdness: WEIRDNESS_MAP[track.phase],
+    styleInfluence: 75,
     _metadata: {
       phase: track.phase,
       energy: track.energy,
@@ -168,12 +181,15 @@ export function formatPromptsForCLI(prompts: SunoPrompt[]): string {
     output += "─".repeat(70) + "\n";
     output += prompt.prompt + "\n";
     output += "─".repeat(70) + "\n\n";
-    output += `⚙️  SUNO SETTINGS:\n`;
+    output += `⚙️  SUNO V5 SETTINGS:\n`;
     output += `   • Title: ${prompt.title}\n`;
     output += `   • Duration: ${prompt.duration} (target)\n`;
     output += `   • Style Tags: ${prompt.style}\n`;
-    output += `   • Instrumental: YES\n`;
-    output += `   • Vocals: NO\n\n`;
+    output += `   • Instrumental: ✅ YES\n`;
+    output += `   • Vocals: ❌ NO\n`;
+    output += `   • Exclude Styles: ${prompt.excludeStyles}\n`;
+    output += `   • Weirdness: ${prompt.weirdness}/100 (keep low for focus)\n`;
+    output += `   • Style Influence: ${prompt.styleInfluence}/100 (medium-high)\n\n`;
     output += `🎵 TECHNICAL INFO:\n`;
     output += `   • Key: ${prompt.key} (${prompt.camelotKey})\n`;
     output += `   • BPM: ${prompt.tempo}\n`;
@@ -189,12 +205,27 @@ export function formatPromptsForCLI(prompts: SunoPrompt[]): string {
   });
 
   output += "\n" + "═".repeat(70) + "\n";
-  output += "  NEXT STEPS:\n";
-  output += "  1. Go to suno.com\n";
-  output += "  2. Paste each prompt above\n";
-  output += "  3. Set Instrumental = true, Vocals = false\n";
-  output += "  4. Generate and download MP3s\n";
-  output += "  5. Upload to your Pravos.xyz music library\n";
+  output += "  🚀 NEXT STEPS - CREATING IN SUNO:\n";
+  output += "═".repeat(70) + "\n";
+  output += "  1. Go to suno.com and click 'Create'\n";
+  output += "  2. Toggle 'Custom' mode ON\n";
+  output += "  3. For each track above:\n";
+  output += "     • Paste the PROMPT into the Style of Music field\n";
+  output += "     • Set the Title\n";
+  output += "     • Add Style Tags from the settings\n";
+  output += "     • Set Instrumental = YES ✅\n";
+  output += "     • Set Vocals = NO ❌\n";
+  output += "     • Paste Exclude Styles text into the Exclude Styles field\n";
+  output += "     • Set Weirdness slider to the specified value (5-20)\n";
+  output += "     • Set Style Influence slider to 75\n";
+  output += "  4. Generate and download MP3s (v5 model)\n";
+  output +=
+    "  5. Optional: Convert to sacred frequency (432Hz, 1111Hz, etc.)\n";
+  output += "  6. Upload to your Pravos.xyz music library\n";
+  output += "═".repeat(70) + "\n";
+  output +=
+    "  💡 TIP: Keep Weirdness LOW (5-20) for calm, coherent focus music.\n";
+  output += "       Higher weirdness (70+) adds experimental FX/noise.\n";
   output += "═".repeat(70) + "\n\n";
 
   return output;
