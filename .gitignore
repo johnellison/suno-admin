@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+*.log
+output/
+samples/
+temp/
+*.mp3
+*.wav
+*.webm
+*.opus
+.DS_Store
