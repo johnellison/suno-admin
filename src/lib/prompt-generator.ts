@@ -1,4 +1,5 @@
 import type { FocusTrack, SunoPrompt, FocusPhase } from "../types/index.js";
+import chalk from "chalk";
 
 const MOOD_MAP: Record<FocusPhase, string[]> = {
   arrival: [
@@ -177,62 +178,101 @@ export function generateAlbumPrompts(
 
 export function formatPromptsForCLI(prompts: SunoPrompt[]): string {
   let output = "\n";
-  output += "═".repeat(70) + "\n";
-  output += "  SUNO V5 PROMPTS - COPY & PASTE INTO SUNO\n";
-  output += "═".repeat(70) + "\n\n";
+  output += chalk.magenta.bold("═".repeat(70) + "\n");
+  output += chalk.magenta.bold(
+    "  🎵 SUNO V5 PROMPTS - READY TO COPY & PASTE\n",
+  );
+  output += chalk.magenta.bold("═".repeat(70) + "\n\n");
 
   prompts.forEach((prompt, index) => {
-    output += `━━━ TRACK ${prompt.trackNumber}/10: ${prompt.title} ━━━\n\n`;
-    output += `📋 COPY THIS PROMPT:\n`;
-    output += "─".repeat(70) + "\n";
-    output += prompt.prompt + "\n";
-    output += "─".repeat(70) + "\n\n";
-    output += `⚙️  SUNO V5 SETTINGS:\n`;
-    output += `   • Title: ${prompt.title}\n`;
-    output += `   • Duration: ${prompt.duration} (target)\n`;
-    output += `   • Style Tags: ${prompt.style}\n`;
-    output += `   • Instrumental: ✅ YES\n`;
-    output += `   • Vocals: ❌ NO\n`;
-    output += `   • Exclude Styles: ${prompt.excludeStyles}\n`;
-    output += `   • Weirdness: ${prompt.weirdness}/100 (keep low for focus)\n`;
-    output += `   • Style Influence: ${prompt.styleInfluence}/100 (medium-high)\n\n`;
-    output += `🎵 TECHNICAL INFO:\n`;
-    output += `   • Key: ${prompt.key} (${prompt.camelotKey})\n`;
-    output += `   • BPM: ${prompt.tempo}\n`;
-    output += `   • Phase: ${prompt._metadata.phase.toUpperCase()}\n`;
-    output += `   • Energy: ${prompt._metadata.energy}\n`;
-    output += `   • Transition: ${prompt._metadata.transition}\n\n`;
-    output += `💡 PURPOSE:\n`;
-    output += `   ${prompt._metadata.purpose}\n\n`;
+    output +=
+      chalk.cyan.bold(`\n━━━ TRACK ${prompt.trackNumber}/10 ━━━ `) +
+      chalk.white.bold(`${prompt.title}\n\n`);
+
+    output += chalk.yellow.bold(`📋 COPY THIS PROMPT:\n`);
+    output += chalk.gray("─".repeat(70) + "\n");
+    output += chalk.green(prompt.prompt + "\n");
+    output += chalk.gray("─".repeat(70) + "\n\n");
+
+    output += chalk.blue.bold(`⚙️  SUNO V5 SETTINGS:\n`);
+    output += chalk.cyan(`   ${chalk.bold("Title:")} ${prompt.title}\n`);
+    output += chalk.cyan(
+      `   ${chalk.bold("Duration:")} ${prompt.duration} (target)\n`,
+    );
+    output += chalk.cyan(
+      `   ${chalk.bold("Style Tags:")} ${chalk.white(prompt.style)}\n`,
+    );
+    output += chalk.green(`   ${chalk.bold("Instrumental:")} ✅ YES\n`);
+    output += chalk.red(`   ${chalk.bold("Vocals:")} ❌ NO\n`);
+    output += chalk.yellow(
+      `   ${chalk.bold("Exclude Styles:")} ${chalk.dim(prompt.excludeStyles)}\n`,
+    );
+    output += chalk.magenta(
+      `   ${chalk.bold("Weirdness:")} ${prompt.weirdness}/100 ${chalk.dim("(keep low for focus)")}\n`,
+    );
+    output += chalk.magenta(
+      `   ${chalk.bold("Style Influence:")} ${prompt.styleInfluence}/100 ${chalk.dim("(medium-high)")}\n\n`,
+    );
+
+    output += chalk.gray.bold(`🎵 TECHNICAL INFO:\n`);
+    output += chalk.gray(`   • Key: ${prompt.key} (${prompt.camelotKey})\n`);
+    output += chalk.gray(`   • BPM: ${prompt.tempo}\n`);
+    output += chalk.gray(
+      `   • Phase: ${prompt._metadata.phase.toUpperCase()}\n`,
+    );
+    output += chalk.gray(`   • Energy: ${prompt._metadata.energy}\n`);
+    output += chalk.gray(`   • Transition: ${prompt._metadata.transition}\n\n`);
+
+    output += chalk.blue.bold(`💡 PURPOSE:\n`);
+    output += chalk.blue(`   ${prompt._metadata.purpose}\n`);
 
     if (index < prompts.length - 1) {
-      output += "\n" + "═".repeat(70) + "\n\n";
+      output += "\n" + chalk.dim("═".repeat(70)) + "\n";
     }
   });
 
-  output += "\n" + "═".repeat(70) + "\n";
-  output += "  🚀 NEXT STEPS - CREATING IN SUNO:\n";
-  output += "═".repeat(70) + "\n";
-  output += "  1. Go to suno.com and click 'Create'\n";
-  output += "  2. Toggle 'Custom' mode ON\n";
-  output += "  3. For each track above:\n";
-  output += "     • Paste the PROMPT into the Style of Music field\n";
-  output += "     • Set the Title\n";
-  output += "     • Add Style Tags from the settings\n";
-  output += "     • Set Instrumental = YES ✅\n";
-  output += "     • Set Vocals = NO ❌\n";
-  output += "     • Paste Exclude Styles text into the Exclude Styles field\n";
-  output += "     • Set Weirdness slider to the specified value (5-20)\n";
-  output += "     • Set Style Influence slider to 75\n";
-  output += "  4. Generate and download MP3s (v5 model)\n";
+  output += "\n\n" + chalk.magenta.bold("═".repeat(70) + "\n");
+  output += chalk.magenta.bold("  🚀 NEXT STEPS - CREATING IN SUNO\n");
+  output += chalk.magenta.bold("═".repeat(70) + "\n");
   output +=
-    "  5. Optional: Convert to sacred frequency (432Hz, 1111Hz, etc.)\n";
-  output += "  6. Upload to your Pravos.xyz music library\n";
-  output += "═".repeat(70) + "\n";
+    chalk.white("  1. Go to ") +
+    chalk.cyan.underline("suno.com") +
+    chalk.white(" and click 'Create'\n");
   output +=
-    "  💡 TIP: Keep Weirdness LOW (5-20) for calm, coherent focus music.\n";
-  output += "       Higher weirdness (70+) adds experimental FX/noise.\n";
-  output += "═".repeat(70) + "\n\n";
+    chalk.white("  2. Toggle ") +
+    chalk.yellow.bold("'Custom'") +
+    chalk.white(" mode ON\n");
+  output += chalk.white("  3. For each track above:\n");
+  output +=
+    chalk.cyan("     • Paste the ") +
+    chalk.yellow.bold("PROMPT") +
+    chalk.cyan(" into the Style of Music field\n");
+  output += chalk.cyan("     • Set the Title\n");
+  output += chalk.cyan("     • Add Style Tags from the settings\n");
+  output += chalk.green("     • Set Instrumental = YES ✅\n");
+  output += chalk.red("     • Set Vocals = NO ❌\n");
+  output += chalk.yellow(
+    "     • Paste Exclude Styles text into the Exclude Styles field\n",
+  );
+  output += chalk.magenta(
+    "     • Set Weirdness slider to the specified value (5-20)\n",
+  );
+  output += chalk.magenta("     • Set Style Influence slider to 75\n");
+  output += chalk.white("  4. Generate and download MP3s (v5 model)\n");
+  output += chalk.white(
+    "  5. Optional: Convert to sacred frequency (432Hz, 1111Hz, etc.)\n",
+  );
+  output += chalk.white("  6. Upload to your Pravos.xyz music library\n");
+  output += chalk.magenta.bold("═".repeat(70) + "\n");
+  output +=
+    chalk.yellow("  💡 TIP: ") +
+    chalk.white("Keep Weirdness ") +
+    chalk.bold("LOW (5-20)") +
+    chalk.white(" for calm, coherent focus music.\n");
+  output += chalk.dim(
+    "       Higher weirdness (70+) adds experimental FX/noise.\n",
+  );
+  output += chalk.magenta.bold("═".repeat(70) + "\n\n");
 
   return output;
 }
