@@ -121,6 +121,7 @@ export interface SunoPrompt {
   key: MusicalKey;
   camelotKey: CamelotKey;
   prompt: string;
+  lyrics: string;
   style: string;
   instrumental: boolean;
   excludeStyles: string;

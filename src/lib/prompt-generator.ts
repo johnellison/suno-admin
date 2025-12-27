@@ -120,7 +120,6 @@ export function generateSunoPrompt(
   const instruments = INSTRUMENT_LAYERS[track.phase];
 
   const prompt = `
-[${track.targetKey}] [${track.targetBPM} BPM]
 ${moods} acoustic handpan meditation music,
 ${instruments},
 natural organic sounds, metallic handpan resonance,
@@ -130,6 +129,8 @@ smooth harmonic ${track.transition} transition,
 professional production, high quality mixing
   `.trim();
 
+  const lyrics = `[ Key: ${track.musicalKey} (${track.targetKey}) ]\n[ BPM: ${track.targetBPM} ]`;
+
   return {
     trackNumber: track.number,
     title,
@@ -138,6 +139,7 @@ professional production, high quality mixing
     key: track.musicalKey,
     camelotKey: track.targetKey,
     prompt,
+    lyrics,
     style: "meditation, ambient, handpan, focus music, deep work, instrumental",
     instrumental: true,
     excludeStyles:
@@ -194,6 +196,11 @@ export function formatPromptsForCLI(prompts: SunoPrompt[]): string {
     output += chalk.green(prompt.prompt + "\n");
     output += chalk.gray("─".repeat(70) + "\n\n");
 
+    output += chalk.yellow.bold(`📝 COPY THIS TO LYRICS FIELD:\n`);
+    output += chalk.gray("─".repeat(70) + "\n");
+    output += chalk.green(prompt.lyrics + "\n");
+    output += chalk.gray("─".repeat(70) + "\n\n");
+
     output += chalk.blue.bold(`⚙️  SUNO V5 SETTINGS:\n`);
     output += chalk.cyan(`   ${chalk.bold("Title:")} ${prompt.title}\n`);
     output += chalk.cyan(
@@ -247,6 +254,10 @@ export function formatPromptsForCLI(prompts: SunoPrompt[]): string {
     chalk.cyan("     • Paste the ") +
     chalk.yellow.bold("PROMPT") +
     chalk.cyan(" into the Style of Music field\n");
+  output +=
+    chalk.cyan("     • Paste the ") +
+    chalk.yellow.bold("LYRICS") +
+    chalk.cyan(" into the Lyrics field (the bracket format)\n");
   output += chalk.cyan("     • Set the Title\n");
   output += chalk.cyan("     • Add Style Tags from the settings\n");
   output += chalk.green("     • Set Instrumental = YES ✅\n");

@@ -14,6 +14,7 @@
     "generate": "tsx src/cli.ts generate",
     "analyze": "tsx src/cli.ts analyze",
     "convert": "tsx src/cli.ts convert",
+    "master": "tsx src/cli.ts master",
     "frequencies": "tsx src/cli.ts frequencies"
   },
   "keywords": [

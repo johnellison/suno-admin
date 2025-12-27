@@ -322,6 +322,98 @@ program
   );
 
 program
+  .command("master")
+  .description("Batch master Suno tracks with warm handpan EQ preset")
+  .argument("<input>", "Directory containing MP3 files to master")
+  .option(
+    "-p, --preset <preset>",
+    "Mastering preset: warm-handpan, meditation, ambient, acoustic",
+    "warm-handpan",
+  )
+  .option(
+    "-f, --frequency <freq>",
+    "Sacred frequency conversion (432, 444, 528, 1111)",
+  )
+  .option("-s, --suffix <suffix>", "Output filename suffix")
+  .action(
+    async (
+      input: string,
+      options: { preset: string; frequency?: string; suffix?: string },
+    ) => {
+      const { batchMasterTracks, getPresetDescription } = await import(
+        "./lib/audio-mastering.js"
+      );
+
+      const validPresets = [
+        "warm-handpan",
+        "meditation",
+        "ambient",
+        "acoustic",
+      ];
+
+      if (!validPresets.includes(options.preset)) {
+        console.error(chalk.red(`❌ Invalid preset: ${options.preset}`));
+        console.log(chalk.yellow("\nAvailable presets:"));
+        validPresets.forEach((p) => {
+          console.log(
+            chalk.cyan(`  • ${p}: `) +
+              chalk.dim(getPresetDescription(p as any)),
+          );
+        });
+        process.exit(1);
+      }
+
+      const sacredFreq = options.frequency
+        ? parseInt(options.frequency)
+        : undefined;
+
+      if (sacredFreq && ![432, 444, 528, 1111].includes(sacredFreq)) {
+        console.error(chalk.red(`❌ Invalid frequency: ${sacredFreq}`));
+        console.log(chalk.yellow("\nValid frequencies: 432, 444, 528, 1111"));
+        process.exit(1);
+      }
+
+      console.log(chalk.magenta.bold("\n🎚️  MASTERING TRACKS\n"));
+      console.log(chalk.cyan(`Preset: ${options.preset}`));
+      console.log(chalk.dim(getPresetDescription(options.preset as any)));
+
+      if (sacredFreq) {
+        console.log(
+          chalk.yellow(`\nSacred Frequency: ${sacredFreq}Hz conversion`),
+        );
+        console.log(
+          chalk.dim(
+            "Note: All tracks will shift together, preserving harmonic relationships",
+          ),
+        );
+      }
+
+      const spinner = ora("Processing tracks...").start();
+
+      try {
+        const outputPaths = batchMasterTracks(input, {
+          preset: options.preset as any,
+          sacredFrequency: sacredFreq,
+          outputSuffix: options.suffix,
+        });
+
+        spinner.succeed(
+          `Mastered ${outputPaths.length} track${outputPaths.length > 1 ? "s" : ""}!`,
+        );
+
+        console.log(chalk.green("\n✅ Complete!"));
+        console.log(chalk.cyan(`   Output: ${input}/mastered/\n`));
+      } catch (error) {
+        spinner.fail("Mastering failed");
+        console.error(
+          chalk.red(error instanceof Error ? error.message : "Unknown error"),
+        );
+        process.exit(1);
+      }
+    },
+  );
+
+program
   .command("frequencies")
   .description("List all available sacred frequencies")
   .action(async () => {
