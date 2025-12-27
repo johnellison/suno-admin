@@ -1,6 +1,10 @@
 import { execSync } from "child_process";
-import { existsSync } from "fs";
+import { existsSync, readdirSync, mkdirSync } from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export type MasteringPreset =
   | "warm-handpan"
@@ -104,10 +108,9 @@ export function batchMasterTracks(
     throw new Error(`Input directory not found: ${inputDir}`);
   }
 
-  const fs = require("fs");
-  const files = fs
-    .readdirSync(inputDir)
-    .filter((f: string) => f.endsWith(".mp3") || f.endsWith(".wav"));
+  const files = readdirSync(inputDir).filter(
+    (f: string) => f.endsWith(".mp3") || f.endsWith(".wav"),
+  );
 
   if (files.length === 0) {
     throw new Error(`No audio files found in ${inputDir}`);
@@ -115,19 +118,20 @@ export function batchMasterTracks(
 
   const outputDir = path.join(inputDir, "mastered");
   if (!existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
+    mkdirSync(outputDir, { recursive: true });
   }
 
   const outputPaths: string[] = [];
 
   for (const file of files) {
     const inputPath = path.join(inputDir, file);
-    const baseName = path.basename(file, path.extname(file));
+    const originalFormat = path.extname(file);
+    const baseName = path.basename(file, originalFormat);
     const suffix = options.outputSuffix || "";
     const freqSuffix = options.sacredFrequency
       ? `_${options.sacredFrequency}Hz`
       : "";
-    const outputName = `${baseName}${suffix}${freqSuffix}_mastered.mp3`;
+    const outputName = `${baseName}${suffix}${freqSuffix}_mastered${originalFormat}`;
     const outputPath = path.join(outputDir, outputName);
 
     console.log(`\n🎚️  Mastering: ${file}`);
@@ -158,4 +162,99 @@ export function getPresetDescription(preset: MasteringPreset): string {
   };
 
   return descriptions[preset];
+}
+
+export interface ReferenceMasteringOptions {
+  referencePath: string;
+  bitDepth?: 16 | 24 | 32;
+}
+
+export interface ReferenceMasteringResult {
+  success: boolean;
+  output?: string;
+  error?: string;
+}
+
+export function masterWithReference(
+  inputPath: string,
+  outputPath: string,
+  options: ReferenceMasteringOptions,
+): ReferenceMasteringResult {
+  if (!existsSync(inputPath)) {
+    return { success: false, error: `Input file not found: ${inputPath}` };
+  }
+
+  if (!existsSync(options.referencePath)) {
+    return { success: false, error: `Reference file not found: ${options.referencePath}` };
+  }
+
+  const scriptPath = path.join(__dirname, "../../scripts/reference-master.py");
+  const projectRoot = path.join(__dirname, "../..");
+  const venvPython = path.join(projectRoot, "venv/bin/python3");
+
+  const bitDepth = options.bitDepth || 24;
+
+  const command = `"${venvPython}" "${scriptPath}" "${inputPath}" --reference "${options.referencePath}" --output "${outputPath}" --bit-depth ${bitDepth}`;
+
+  try {
+    const result = execSync(command, { stdio: "pipe", encoding: "utf-8" });
+    const parsed = JSON.parse(result);
+
+    if (parsed.success) {
+      return { success: true, output: parsed.output };
+    } else {
+      return { success: false, error: parsed.error };
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      error: `Failed to master track: ${error.message}`,
+    };
+  }
+}
+
+export function batchMasterWithReference(
+  inputDir: string,
+  options: ReferenceMasteringOptions,
+): string[] {
+  if (!existsSync(inputDir)) {
+    throw new Error(`Input directory not found: ${inputDir}`);
+  }
+
+  const files = readdirSync(inputDir).filter(
+    (f: string) => f.endsWith(".mp3") || f.endsWith(".wav"),
+  );
+
+  if (files.length === 0) {
+    throw new Error(`No audio files found in ${inputDir}`);
+  }
+
+  const outputDir = path.join(inputDir, "mastered");
+  if (!existsSync(outputDir)) {
+    mkdirSync(outputDir, { recursive: true });
+  }
+
+  const outputPaths: string[] = [];
+
+  for (const file of files) {
+    const inputPath = path.join(inputDir, file);
+    const originalFormat = path.extname(file);
+    const baseName = path.basename(file, originalFormat);
+    const outputName = `${baseName}_mastered${originalFormat}`;
+    const outputPath = path.join(outputDir, outputName);
+
+    console.log(`\n🎚️  Reference Mastering: ${file}`);
+    console.log(`    Reference: ${path.basename(options.referencePath)}`);
+
+    const result = masterWithReference(inputPath, outputPath, options);
+
+    if (result.success) {
+      outputPaths.push(outputPath);
+      console.log(`✅  Saved: ${outputName}`);
+    } else {
+      console.error(`❌  Failed: ${result.error}`);
+    }
+  }
+
+  return outputPaths;
 }

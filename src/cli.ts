@@ -323,92 +323,185 @@ program
 
 program
   .command("master")
-  .description("Batch master Suno tracks with warm handpan EQ preset")
-  .argument("<input>", "Directory containing MP3 files to master")
+  .description("Master tracks with reference matching or presets, optionally convert to sacred frequency")
+  .argument("<input>", "Audio file or directory to master")
   .option(
     "-p, --preset <preset>",
     "Mastering preset: warm-handpan, meditation, ambient, acoustic",
     "warm-handpan",
   )
   .option(
+    "-r, --reference <path>",
+    "Reference track to match (uses AI-powered matchering)",
+  )
+  .option(
     "-f, --frequency <freq>",
-    "Sacred frequency conversion (432, 444, 528, 1111)",
+    "Sacred frequency conversion (432, 444, 528, 639, 741, 852, 963, 1111)",
   )
   .option("-s, --suffix <suffix>", "Output filename suffix")
+  .option("-b, --bit-depth <depth>", "Output bit depth for reference mastering (16, 24, 32)", "24")
   .action(
     async (
       input: string,
-      options: { preset: string; frequency?: string; suffix?: string },
+      options: { preset: string; reference?: string; frequency?: string; suffix?: string; bitDepth: string },
     ) => {
-      const { batchMasterTracks, getPresetDescription } = await import(
-        "./lib/audio-mastering.js"
-      );
+      const { existsSync, statSync } = await import("fs");
+      const { basename, join } = await import("path");
+      const { convertAlbumToFrequency, convertToSacredFrequency } = await import("./lib/frequency-converter.js");
 
-      const validPresets = [
-        "warm-handpan",
-        "meditation",
-        "ambient",
-        "acoustic",
-      ];
+      const validFreqs = [432, 444, 528, 639, 741, 852, 963, 1111];
+      const sacredFreq = options.frequency ? parseInt(options.frequency) : undefined;
 
-      if (!validPresets.includes(options.preset)) {
-        console.error(chalk.red(`❌ Invalid preset: ${options.preset}`));
-        console.log(chalk.yellow("\nAvailable presets:"));
-        validPresets.forEach((p) => {
-          console.log(
-            chalk.cyan(`  • ${p}: `) +
-              chalk.dim(getPresetDescription(p as any)),
-          );
-        });
-        process.exit(1);
-      }
-
-      const sacredFreq = options.frequency
-        ? parseInt(options.frequency)
-        : undefined;
-
-      if (sacredFreq && ![432, 444, 528, 1111].includes(sacredFreq)) {
+      if (sacredFreq && !validFreqs.includes(sacredFreq)) {
         console.error(chalk.red(`❌ Invalid frequency: ${sacredFreq}`));
-        console.log(chalk.yellow("\nValid frequencies: 432, 444, 528, 1111"));
+        console.log(chalk.yellow(`\nValid frequencies: ${validFreqs.join(", ")}`));
         process.exit(1);
       }
 
-      console.log(chalk.magenta.bold("\n🎚️  MASTERING TRACKS\n"));
-      console.log(chalk.cyan(`Preset: ${options.preset}`));
-      console.log(chalk.dim(getPresetDescription(options.preset as any)));
+      if (!existsSync(input)) {
+        console.error(chalk.red(`❌ Input not found: ${input}`));
+        process.exit(1);
+      }
+
+      const isDirectory = statSync(input).isDirectory();
+      let masteredDir = isDirectory ? join(input, "mastered") : join(input, "..", "mastered");
+      let trackCount = 0;
+
+      if (options.reference) {
+        const { batchMasterWithReference, masterWithReference } = await import(
+          "./lib/audio-mastering.js"
+        );
+
+        if (!existsSync(options.reference)) {
+          console.error(chalk.red(`❌ Reference file not found: ${options.reference}`));
+          process.exit(1);
+        }
+
+        console.log(chalk.magenta.bold("\n🎚️  REFERENCE MASTERING\n"));
+        console.log(chalk.cyan(`Reference Track: ${basename(options.reference)}`));
+        console.log(chalk.dim("Using matchering to match your tracks to the reference's sound profile"));
+        console.log(chalk.dim(`Bit Depth: ${options.bitDepth}-bit`));
+        if (sacredFreq) {
+          console.log(chalk.yellow(`Sacred Frequency: ${sacredFreq}Hz (applied after mastering)`));
+        }
+        console.log("");
+
+        const spinner = ora("Processing tracks with reference matching...").start();
+
+        try {
+          if (isDirectory) {
+            const outputPaths = batchMasterWithReference(input, {
+              referencePath: options.reference,
+              bitDepth: parseInt(options.bitDepth) as 16 | 24 | 32,
+            });
+            trackCount = outputPaths.length;
+          } else {
+            const ext = input.endsWith(".wav") ? ".wav" : ".mp3";
+            const outName = `${basename(input, ext)}_mastered${ext}`;
+            const { mkdirSync } = await import("fs");
+            mkdirSync(masteredDir, { recursive: true });
+            const outPath = join(masteredDir, outName);
+            const result = masterWithReference(input, outPath, {
+              referencePath: options.reference,
+              bitDepth: parseInt(options.bitDepth) as 16 | 24 | 32,
+            });
+            if (!result.success) throw new Error(result.error);
+            trackCount = 1;
+          }
+
+          spinner.succeed(`Mastered ${trackCount} track${trackCount > 1 ? "s" : ""} to match reference!`);
+        } catch (error) {
+          spinner.fail("Reference mastering failed");
+          console.error(chalk.red(error instanceof Error ? error.message : "Unknown error"));
+          process.exit(1);
+        }
+      } else {
+        const { batchMasterTracks, masterTrack, getPresetDescription } = await import(
+          "./lib/audio-mastering.js"
+        );
+
+        const validPresets = ["warm-handpan", "meditation", "ambient", "acoustic"];
+
+        if (!validPresets.includes(options.preset)) {
+          console.error(chalk.red(`❌ Invalid preset: ${options.preset}`));
+          console.log(chalk.yellow("\nAvailable presets:"));
+          validPresets.forEach((p) => {
+            console.log(chalk.cyan(`  • ${p}: `) + chalk.dim(getPresetDescription(p as any)));
+          });
+          process.exit(1);
+        }
+
+        console.log(chalk.magenta.bold("\n🎚️  MASTERING TRACKS\n"));
+        console.log(chalk.cyan(`Preset: ${options.preset}`));
+        console.log(chalk.dim(getPresetDescription(options.preset as any)));
+        if (sacredFreq) {
+          console.log(chalk.yellow(`\nSacred Frequency: ${sacredFreq}Hz (applied after mastering)`));
+        }
+
+        const spinner = ora("Processing tracks...").start();
+
+        try {
+          if (isDirectory) {
+            const outputPaths = batchMasterTracks(input, {
+              preset: options.preset as any,
+              outputSuffix: options.suffix,
+            });
+            trackCount = outputPaths.length;
+          } else {
+            const ext = input.endsWith(".wav") ? ".wav" : ".mp3";
+            const outName = `${basename(input, ext)}${options.suffix || ""}_mastered${ext}`;
+            const { mkdirSync } = await import("fs");
+            mkdirSync(masteredDir, { recursive: true });
+            const outPath = join(masteredDir, outName);
+            masterTrack(input, outPath, { preset: options.preset as any });
+            trackCount = 1;
+          }
+
+          spinner.succeed(`Mastered ${trackCount} track${trackCount > 1 ? "s" : ""}!`);
+        } catch (error) {
+          spinner.fail("Mastering failed");
+          console.error(chalk.red(error instanceof Error ? error.message : "Unknown error"));
+          process.exit(1);
+        }
+      }
 
       if (sacredFreq) {
-        console.log(
-          chalk.yellow(`\nSacred Frequency: ${sacredFreq}Hz conversion`),
-        );
-        console.log(
-          chalk.dim(
-            "Note: All tracks will shift together, preserving harmonic relationships",
-          ),
-        );
-      }
+        const freqNames: Record<number, string> = {
+          432: "Natural Tuning", 444: "Spiritual Clarity", 528: "Love Frequency",
+          639: "Connection", 741: "Awakening", 852: "Intuition",
+          963: "Divine Connection", 1111: "Manifestation",
+        };
 
-      const spinner = ora("Processing tracks...").start();
+        console.log(chalk.magenta.bold(`\n🎵  CONVERTING TO ${sacredFreq}Hz (${freqNames[sacredFreq]})\n`));
 
-      try {
-        const outputPaths = batchMasterTracks(input, {
-          preset: options.preset as any,
-          sacredFrequency: sacredFreq,
-          outputSuffix: options.suffix,
-        });
+        const spinner = ora(`Converting to ${sacredFreq}Hz...`).start();
+        const finalDir = isDirectory ? join(input, `final-${sacredFreq}hz`) : masteredDir;
 
-        spinner.succeed(
-          `Mastered ${outputPaths.length} track${outputPaths.length > 1 ? "s" : ""}!`,
-        );
-
+        try {
+          if (isDirectory) {
+            await convertAlbumToFrequency(masteredDir, finalDir, sacredFreq as any);
+          } else {
+            const { readdirSync } = await import("fs");
+            const files = readdirSync(masteredDir).filter(f => f.endsWith(".mp3") || f.endsWith(".wav"));
+            for (const file of files) {
+              const ext = file.endsWith(".wav") ? ".wav" : ".mp3";
+              const inPath = join(masteredDir, file);
+              const outPath = join(finalDir, file.replace(ext, `-${sacredFreq}hz${ext}`));
+              await convertToSacredFrequency({ inputFile: inPath, outputFile: outPath, targetFrequency: sacredFreq as any });
+            }
+          }
+          spinner.succeed(`Converted to ${sacredFreq}Hz!`);
+          console.log(chalk.green("\n✅ Complete!"));
+          console.log(chalk.cyan(`   Mastered: ${masteredDir}/`));
+          console.log(chalk.cyan(`   Final (${sacredFreq}Hz): ${finalDir}/\n`));
+        } catch (error) {
+          spinner.fail("Frequency conversion failed");
+          console.error(chalk.red(error instanceof Error ? error.message : "Unknown error"));
+          process.exit(1);
+        }
+      } else {
         console.log(chalk.green("\n✅ Complete!"));
-        console.log(chalk.cyan(`   Output: ${input}/mastered/\n`));
-      } catch (error) {
-        spinner.fail("Mastering failed");
-        console.error(
-          chalk.red(error instanceof Error ? error.message : "Unknown error"),
-        );
-        process.exit(1);
+        console.log(chalk.cyan(`   Output: ${masteredDir}/\n`));
       }
     },
   );
@@ -421,6 +514,145 @@ program
       "./lib/frequency-converter.js"
     );
     listSacredFrequencies();
+  });
+
+program
+  .command("help-full")
+  .description("Show comprehensive usage guide with all presets and options")
+  .action(async () => {
+    const { getPresetDescription } = await import("./lib/audio-mastering.js");
+
+    console.log(chalk.magenta.bold(`
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║              SUNO MASTERING TOOLKIT - FULL GUIDE              ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+`));
+
+    console.log(chalk.cyan.bold("OVERVIEW"));
+    console.log(chalk.dim("─".repeat(60)));
+    console.log(`
+Master your Suno-generated tracks for upload to Pravos.xyz.
+Two mastering modes: Reference Matching (AI) or EQ Presets.
+Optional sacred frequency conversion (432Hz, etc).
+`);
+
+    console.log(chalk.cyan.bold("QUICK START"));
+    console.log(chalk.dim("─".repeat(60)));
+    console.log(`
+${chalk.yellow("# Reference mastering (match your tracks to a reference)")}
+npm run master ./my-album -- --reference ./reference-track.mp3
+
+${chalk.yellow("# Reference mastering + 432Hz conversion")}
+npm run master ./my-album -- --reference ./ref.mp3 --frequency 432
+
+${chalk.yellow("# Preset mastering (use built-in EQ profiles)")}
+npm run master ./my-album -- --preset warm-handpan
+
+${chalk.yellow("# Single file")}
+npm run master ./track.wav -- --reference ./ref.mp3 --frequency 432
+`);
+
+    console.log(chalk.cyan.bold("MASTERING PRESETS"));
+    console.log(chalk.dim("─".repeat(60)));
+    const presets = ["warm-handpan", "meditation", "ambient", "acoustic"] as const;
+    presets.forEach((p) => {
+      console.log(`\n  ${chalk.yellow(p)}`);
+      console.log(`  ${chalk.dim(getPresetDescription(p))}`);
+    });
+
+    console.log(chalk.cyan.bold("\n\nREFERENCE MASTERING"));
+    console.log(chalk.dim("─".repeat(60)));
+    console.log(`
+Uses ${chalk.yellow("matchering")} (AI-powered) to analyze a reference track and 
+match your tracks to its sonic profile (EQ, dynamics, loudness).
+
+${chalk.yellow("Best for:")} When you have a professionally mastered track you 
+want your music to sound like.
+
+${chalk.yellow("Options:")}
+  --reference, -r   Path to reference audio file
+  --bit-depth, -b   Output quality: 16, 24 (default), or 32 bit
+`);
+
+    console.log(chalk.cyan.bold("SACRED FREQUENCIES"));
+    console.log(chalk.dim("─".repeat(60)));
+    console.log(`
+Convert from standard 440Hz tuning to alternative frequencies.
+Applied ${chalk.yellow("after")} mastering for best quality.
+
+  ${chalk.yellow("432 Hz")} - Natural Tuning
+           Grounding, earth connection, harmony
+
+  ${chalk.yellow("444 Hz")} - Spiritual Clarity  
+           Higher consciousness, divine connection
+
+  ${chalk.yellow("528 Hz")} - Love Frequency
+           DNA repair, transformation, miracles
+
+  ${chalk.yellow("639 Hz")} - Connection
+           Relationships, communication, harmony
+
+  ${chalk.yellow("741 Hz")} - Awakening
+           Intuition, problem-solving, expression
+
+  ${chalk.yellow("852 Hz")} - Intuition
+           Spiritual awakening, inner strength
+
+  ${chalk.yellow("963 Hz")} - Divine Connection
+           Pineal gland activation, unity
+
+  ${chalk.yellow("1111 Hz")} - Manifestation
+           Alignment, angel numbers, spiritual awakening
+`);
+
+    console.log(chalk.cyan.bold("OUTPUT STRUCTURE"));
+    console.log(chalk.dim("─".repeat(60)));
+    console.log(`
+${chalk.yellow("Input:")}  ./my-album/
+           ├── track1.mp3
+           ├── track1.wav
+           └── track2.mp3
+
+${chalk.yellow("After mastering:")}
+         ./my-album/
+           ├── mastered/
+           │   ├── track1_mastered.mp3
+           │   ├── track1_mastered.wav
+           │   └── track2_mastered.mp3
+
+${chalk.yellow("After mastering + frequency:")}
+         ./my-album/
+           ├── mastered/           ${chalk.dim("(intermediate)")}
+           └── final-432hz/        ${chalk.dim("(upload these)")}
+               ├── track1_mastered-432hz.mp3
+               ├── track1_mastered-432hz.wav
+               └── track2_mastered-432hz.mp3
+`);
+
+    console.log(chalk.cyan.bold("FORMAT HANDLING"));
+    console.log(chalk.dim("─".repeat(60)));
+    console.log(`
+${chalk.yellow("MP3")} → MP3  (for regular users, smaller files)
+${chalk.yellow("WAV")} → WAV  (for pro users, lossless quality)
+
+Both formats are preserved throughout the pipeline.
+`);
+
+    console.log(chalk.cyan.bold("ALL COMMANDS"));
+    console.log(chalk.dim("─".repeat(60)));
+    console.log(`
+  ${chalk.yellow("npm run master")}      Master tracks (reference or preset)
+  ${chalk.yellow("npm run convert")}     Convert frequency only (no mastering)
+  ${chalk.yellow("npm run analyze")}     Analyze audio file (BPM, key, energy)
+  ${chalk.yellow("npm run generate")}    Generate Suno prompts for new album
+  ${chalk.yellow("npm run frequencies")} List sacred frequencies
+  ${chalk.yellow("npm run help-full")}   Show this guide
+`);
+
+    console.log(chalk.dim("─".repeat(60)));
+    console.log(chalk.cyan("For Pravos.xyz | Built with matchering + ffmpeg\n"));
   });
 
 program.parse();

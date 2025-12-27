@@ -1,296 +1,244 @@
-# Suno Admin - AI-Powered Music Prompt Generator
+# Suno Mastering Toolkit
 
-Generate perfectly-structured Suno v5 prompts for 25-minute focus music albums using harmonic mixing (Camelot wheel) and ecstatic dance arc principles.
+Master your Suno-generated tracks for upload to [Pravos.xyz](https://pravos.xyz). Reference-based AI mastering, EQ presets, and sacred frequency conversion.
 
-## 🎯 What This Does
+## Features
 
-Creates **10-track focus session albums** with:
+- **Reference Mastering** - Match your tracks to any professional reference using AI (matchering)
+- **EQ Presets** - Built-in profiles for handpan, meditation, ambient, acoustic
+- **Sacred Frequencies** - Convert to 432Hz, 528Hz, 1111Hz, and more
+- **Dual Format** - Preserves both MP3 (regular users) and WAV (pro/lossless)
+- **Batch Processing** - Process entire albums or single files in one command
+- **Prompt Generation** - AI-powered Suno v5 prompts with harmonic mixing
 
-- ✅ DJ-style harmonic mixing (Camelot wheel transitions)
-- ✅ Ecstatic dance energy arc (60 → 85 → 60 BPM)
-- ✅ Perfect phase progression (Arrival → Flow → Lock-in → Landing)
-- ✅ Copy-paste ready Suno v5 prompts
-
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Install Node.js dependencies
+# Install dependencies
 npm install
 
-# Install Python dependencies (for audio analysis)
+# Set up Python environment
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Set up Gemini API (optional, for AI insights)
-cp .env.example .env
-# Add your GEMINI_API_KEY to .env
+# Master an album with reference matching + 432Hz
+npm run master ./my-album -- --reference ./reference-track.mp3 --frequency 432
 
-# Generate album prompts (default settings)
-npm run generate
+# Show full help
+npm run help-full
+```
 
-# 🎯 AI-Powered: Analyze audio and generate inspired prompts
-npm run generate -- --source ../suno-inspiration/samples-4min/Healing\ Frequency\ 1111Hz\ -\ 4min\ sample.mp3
+## Commands
 
-# Test audio analysis
-npm run analyze ../suno-inspiration/samples-4min/your-audio.mp3
+| Command | Description |
+|---------|-------------|
+| `npm run master` | Master tracks (reference or preset mode) |
+| `npm run convert` | Convert frequency only (no mastering) |
+| `npm run analyze` | Analyze audio file (BPM, key, energy) |
+| `npm run generate` | Generate Suno prompts for new album |
+| `npm run frequencies` | List all sacred frequencies |
+| `npm run help-full` | Show comprehensive usage guide |
+
+## Mastering
+
+### One Command Does Everything
+
+```bash
+# Reference mastering + 432Hz conversion
+npm run master ./my-album -- --reference ./professional-track.mp3 --frequency 432
+
+# Single file
+npm run master ./track.wav -- --reference ./ref.mp3 --frequency 432
+
+# Preset mastering (no reference needed)
+npm run master ./my-album -- --preset warm-handpan --frequency 432
+```
+
+### Reference Mastering
+
+Uses AI-powered [matchering](https://github.com/sergree/matchering) to analyze a reference track and match your tracks to its sonic profile (EQ, dynamics, loudness, stereo width).
+
+**Best for:** When you have a professionally mastered track you want your music to sound like.
+
+```bash
+npm run master ./my-album -- --reference ./pro-track.mp3
+npm run master ./my-album -- --reference ./ref.mp3 --bit-depth 24
+```
+
+### Preset Mastering
+
+Use built-in EQ profiles when you don't have a reference track.
+
+| Preset | Description |
+|--------|-------------|
+| `warm-handpan` | Reduces tinny highs (8-15kHz), boosts warm lows (150-500Hz), gentle compression, subtle reverb. Perfect for Suno handpan tracks. |
+| `meditation` | Extra warmth, reduced high frequencies, soft reverb, gentle compression. Ideal for deep meditation and sleep music. |
+| `ambient` | Balanced warmth, moderate reverb, smooth high-end rolloff. Great for ambient soundscapes. |
+| `acoustic` | Natural warmth, preserves acoustic detail, gentle compression. Perfect for piano, guitar, strings. |
+
+```bash
+npm run master ./my-album -- --preset meditation
+npm run master ./my-album -- --preset warm-handpan --frequency 432
+```
+
+## Sacred Frequencies
+
+Convert from standard 440Hz tuning to alternative frequencies. Applied after mastering for best quality.
+
+| Frequency | Name | Purpose |
+|-----------|------|---------|
+| **432 Hz** | Natural Tuning | Grounding, earth connection, harmony |
+| **444 Hz** | Spiritual Clarity | Higher consciousness, divine connection |
+| **528 Hz** | Love Frequency | DNA repair, transformation, miracles |
+| **639 Hz** | Connection | Relationships, communication, harmony |
+| **741 Hz** | Awakening | Intuition, problem-solving, expression |
+| **852 Hz** | Intuition | Spiritual awakening, inner strength |
+| **963 Hz** | Divine Connection | Pineal gland activation, unity |
+| **1111 Hz** | Manifestation | Alignment, angel numbers, spiritual awakening |
+
+```bash
+# Applied automatically with --frequency flag
+npm run master ./my-album -- --reference ./ref.mp3 --frequency 432
+
+# Or convert existing files (no mastering)
+npm run convert ./my-album -- --frequency 432
+```
+
+## Output Structure
+
+```
+./my-album/
+├── track1.mp3              # Original
+├── track1.wav              # Original (pro)
+├── mastered/               # After mastering
+│   ├── track1_mastered.mp3
+│   └── track1_mastered.wav
+└── final-432hz/            # After frequency conversion
+    ├── track1_mastered-432hz.mp3
+    └── track1_mastered-432hz.wav   # Upload these!
+```
+
+## Format Handling
+
+| Input | Output | Use Case |
+|-------|--------|----------|
+| MP3 | MP3 | Regular users, smaller files |
+| WAV | WAV | Pro users, lossless quality |
+
+Both formats are preserved throughout the entire pipeline.
+
+## Suno Prompt Generation
+
+Generate AI-powered prompts for creating new 10-track focus albums:
+
+```bash
+# Generate prompts inspired by a reference track
+npm run generate -- --source ./inspiration.mp3
 
 # Preview arc structure
 npm run generate -- --preview
 
 # Custom settings
-npm run generate -- --name "Deep Work Session" --start-key 5A --peak-bpm 90
+npm run generate -- --name "Deep Focus" --start-key 5A --peak-bpm 90
 ```
 
-## 🎨 Beautiful TUI Experience
+Features:
+- DJ-style harmonic mixing (Camelot wheel transitions)
+- Ecstatic dance energy arc (60 → 85 → 60 BPM)
+- AI-generated poetic track names (via Gemini)
+- Copy-paste ready Suno v5 prompts
 
-Enjoy a **musician-worthy CLI experience** with gorgeous animations and gradient colors:
+## Audio Analysis
 
-- 🌊 **Animated sound wave intro** - Purple & pink gradients welcome you
-- 📦 **Boxed album reveals** - Track names displayed in stunning bordered boxes
-- 🎵 **Musical note outro** - Celebration animation when generation completes
-- ⚡ **Frequency banners** - Sacred frequency conversion with ASCII art
-- 🌈 **Gradient styling** - Purple, pink, and blue color themes throughout
-
-**The CLI feels like a piece of art, not just a technical tool.**
-
-## 📋 Output Example
-
-```
-Track 01  🌅  1A   60 BPM  ████████████
-         ARRIVAL     low
-         Settle nervous system, create container for focus
-
-Track 07  🔥  7A   85 BPM  █████████████████
-         LOCKIN      sustained
-         Peak concentration, maximum cognitive capacity
-
-Track 10  ✨  12A  60 BPM  ████████████
-         LANDING     low
-         Complete the cycle, rest and reflect
-```
-
-## ✨ NEW: Creative Musician-Worthy Naming
-
-No more boring "Track 1", "Opening 2"! **Gemini AI generates poetic, evocative track and album names** inspired by your music:
-
-**Example output:**
-
-```
-Album: "Depths of Stillness"
-
-🎨 Track Names:
-   1. First Light Breaking
-   2. Gentle Settling
-   3. Opening the Portal
-   4. Building the Current
-   5. Deep Water Flow
-   6. Endless Horizon
-   7. The Crystalline Peak
-   8. Soft Unwinding
-   9. Homeward Drift
-   10. Silent Integration
-```
-
-AI creates names that feel like a **musician's creative work**, not a technical spec.
-
-## 🎵 NEW: Sacred Frequency Converter
-
-Musicians often tune to **sacred frequencies** (432Hz, 444Hz, 528Hz, 1111Hz) instead of standard 440Hz. After generating tracks in Suno, **convert them to your desired frequency**:
+Analyze any audio file:
 
 ```bash
-# Convert single track to 432Hz (Natural Tuning)
-npm run convert track.mp3 -- --frequency 432
-
-# Convert entire album to 1111Hz (Manifestation)
-npm run convert album-folder/ -- --frequency 1111 --output album-1111hz/
-
-# List all available frequencies
-npm run frequencies
+npm run analyze ./track.mp3
 ```
 
-**Available Sacred Frequencies:**
+Returns: BPM, key, energy level, brightness, AI insights on mood/style.
 
-- **432 Hz** - Natural Tuning (grounding, earth connection)
-- **444 Hz** - Spiritual Clarity (higher consciousness)
-- **528 Hz** - Love Frequency (DNA repair, transformation)
-- **1111 Hz** - Manifestation (alignment, spiritual awakening)
-- Plus: 639Hz, 741Hz, 852Hz, 963Hz
-
-## 🤖 AI-Powered Audio Analysis
-
-**Analyze existing audio files** to generate prompts inspired by their vibe:
+## Complete Workflow
 
 ```bash
-npm run generate -- --source /path/to/your/audio.mp3
+# 1. Generate prompts for a new album
+npm run generate -- --source ./inspiration.mp3
+
+# 2. Create tracks in Suno (manual - copy prompts to suno.com)
+
+# 3. Download both MP3 and WAV from Suno
+
+# 4. Master with reference matching + 432Hz
+npm run master ./my-new-album -- \
+  --reference ./inspiration.mp3 \
+  --frequency 432
+
+# 5. Upload final-432hz/ folder to Pravos.xyz
 ```
 
-**What it does:**
+## Requirements
 
-1. **Audio Analysis** (Python/librosa): Detects BPM, key, energy, brightness
-2. **AI Insights** (Gemini 2.0): Analyzes mood, style, instruments, atmosphere
-3. **Smart Prompts**: Generates Suno prompts that match the source music's character
-
-**Example output:**
-
-```
-📊 Audio Analysis:
-   Detected Tempo: 72 BPM
-   Detected Key: Bm
-   Energy Level: 45%
-
-🤖 AI Insights:
-   Mood: meditative, grounding, peaceful
-   Style: ambient handpan with nature soundscape
-   Instruments: handpan, soft pads, gentle percussion
-   Atmosphere: Calming and centering, perfect for deep focus
-   Suggested BPM Range: 65-78
-```
-
-## 🎵 How It Works
-
-### 1. Arc Designer
-
-Builds 10-track structure following ecstatic dance principles adapted for deep work:
-
-- **Tracks 1-2**: Arrival (60-65 BPM) - Ground and settle
-- **Tracks 3-4**: Engage (70-75 BPM) - Activate attention
-- **Tracks 5-6**: Flow (80-85 BPM) - Deep work state
-- **Track 7**: Lock-in (85 BPM) - Peak focus
-- **Tracks 8-9**: Ease-off (75-70 BPM) - Graceful descent
-- **Track 10**: Landing (60 BPM) - Integration
-
-### 2. Harmonic Mixing (Camelot Wheel)
-
-Ensures smooth transitions between tracks:
-
-- **Perfect Fifth**: Adjacent keys (1A → 2A)
-- **Relative Major/Minor**: Same number (1A → 1B)
-- **Energy Boost**: +7 jump (1A → 8A)
-
-### 3. Prompt Generation
-
-Creates Suno-optimized prompts with:
-
-- Exact BPM and key specifications
-- Phase-appropriate moods and instruments
-- Seamless loop structure
-- Professional mixing tags
-
-## 💻 CLI Commands
-
-### Generate Album Prompts
+- Node.js 18+
+- Python 3.8+
+- ffmpeg (frequency conversion)
+- sox (preset mastering)
 
 ```bash
-# Generate with AI analysis + creative names (RECOMMENDED!)
-npm run generate -- --source /path/to/audio.mp3
+# macOS
+brew install ffmpeg sox
 
-# Generate with manual settings
-npm run generate -- --name "Deep Work" --start-key 5A --peak-bpm 90
-
-# Preview arc structure
-npm run generate -- --preview
-
-# Options:
-#   -s, --source <path>      Audio file to analyze for inspiration
-#   -n, --name <name>        Album name (overrides AI-generated name)
-#   -k, --start-key <key>    Starting Camelot key (overrides analysis)
-#   --start-bpm <bpm>        Starting BPM (overrides analysis)
-#   --peak-bpm <bpm>         Peak BPM (overrides analysis)
-#   -o, --output <dir>       Output directory (default: "./output")
+# Ubuntu/Debian
+sudo apt install ffmpeg sox
 ```
 
-### Sacred Frequency Conversion
-
-```bash
-# Convert single file to 432Hz
-npm run convert track.mp3 -- --frequency 432
-
-# Convert entire album directory
-npm run convert album-folder/ -- --frequency 1111 --output album-1111hz/
-
-# List all sacred frequencies
-npm run frequencies
-```
-
-### Audio Analysis
-
-```bash
-# Test audio analysis (see BPM, key, mood)
-npm run analyze /path/to/audio.mp3
-```
-
-## 📂 Project Structure
+## Project Structure
 
 ```
 suno-admin/
 ├── src/
 │   ├── lib/
-│   │   ├── camelot-wheel.ts      # Harmonic mixing engine
+│   │   ├── audio-mastering.ts    # Preset + reference mastering
+│   │   ├── frequency-converter.ts # Sacred frequency conversion
 │   │   ├── arc-designer.ts       # Focus session arc builder
-│   │   └── prompt-generator.ts   # Suno prompt creator
-│   ├── types/
-│   │   └── index.ts              # TypeScript definitions
+│   │   ├── prompt-generator.ts   # Suno prompt creator
+│   │   └── camelot-wheel.ts      # Harmonic mixing engine
+│   ├── analyzers/
+│   │   ├── audio-analyzer.ts     # Python bridge
+│   │   └── gemini-analyzer.ts    # AI insights
 │   └── cli.ts                    # Command-line interface
-├── output/                       # Generated prompts (JSON)
-└── package.json
+├── scripts/
+│   ├── analyze-audio.py          # Audio analysis (librosa)
+│   └── reference-master.py       # Reference mastering (matchering)
+└── output/                       # Generated prompts
 ```
 
-## 🎹 Camelot Wheel Reference
+## Tech Stack
 
-| Key      | Compatible With | Use For      |
-| -------- | --------------- | ------------ |
-| 1A (A♭m) | 1B, 2A, 12A     | Smooth flow  |
-| 1B (B)   | 1A, 2B, 12B     | Energy match |
-| ...      | ...             | ...          |
+- **TypeScript** - CLI and core logic
+- **matchering** - AI-powered reference mastering
+- **ffmpeg** - Frequency conversion
+- **sox** - EQ preset mastering
+- **librosa** - Audio analysis (Python)
+- **Gemini API** - AI insights for prompt generation
 
-**Transition Rules:**
+## Roadmap
 
-- **Same Number** (1A → 1B): Perfect energy match
-- **±1** (1A → 2A): Smooth fifth
-- **+7** (1A → 8A): Dramatic boost
-
-## 🎯 Complete Workflow
-
-**1. Generate Suno Prompts (with AI naming)**
-
-```bash
-npm run generate -- --source handpan-sample.mp3
-# → Get 10 creative prompts + poetic track names
-```
-
-**2. Create Music in Suno**
-
-- Copy each prompt to suno.com
-- Generate & download 10 tracks
-
-**3. Convert to Sacred Frequency**
-
-```bash
-npm run convert suno-tracks/ -- --frequency 1111 --output album-1111hz/
-# → All tracks tuned to 1111Hz manifestation frequency
-```
-
-**4. Upload to Pravos.xyz**
-
-- Add converted tracks to your focus music library
-
-## 🔮 Roadmap
-
-- [x] Audio analysis (BPM/key detection with librosa)
-- [x] AI-powered mood analysis (Gemini 2.0 Flash)
-- [x] Creative track & album naming (Gemini-powered)
-- [x] Sacred frequency converter (432Hz, 444Hz, 528Hz, 1111Hz, etc.)
-- [x] Beautiful TUI effects (animated intro, boxed reveals, gradient colors)
-- [ ] YouTube download integration (yt-dlp)
+- [x] Reference mastering (matchering)
+- [x] EQ preset mastering (sox)
+- [x] Sacred frequency conversion
+- [x] Dual format preservation (MP3/WAV)
+- [x] Single command workflow
+- [x] Suno prompt generation
+- [x] Audio analysis
+- [ ] Custom EQ preset builder
 - [ ] Web admin panel
-- [ ] Direct integration with Pravos.xyz
-- [ ] Batch processing (analyze multiple files at once)
+- [ ] Direct Pravos.xyz integration
 
-## 📝 License
+## License
 
 MIT
 
-## 🙏 Credits
+## Credits
 
 Built for [Pravos.xyz](https://pravos.xyz) - Focus music platform

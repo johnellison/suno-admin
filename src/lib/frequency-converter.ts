@@ -36,6 +36,24 @@ export interface ConversionOptions {
   baseFrequency?: number;
 }
 
+function buildAtempoChain(tempo: number): string {
+  const filters: string[] = [];
+  let remaining = tempo;
+
+  while (remaining < 0.5) {
+    filters.push("atempo=0.5");
+    remaining = remaining / 0.5;
+  }
+
+  while (remaining > 2.0) {
+    filters.push("atempo=2.0");
+    remaining = remaining / 2.0;
+  }
+
+  filters.push(`atempo=${remaining.toFixed(6)}`);
+  return filters.join(",");
+}
+
 export async function convertToSacredFrequency(
   options: ConversionOptions,
 ): Promise<{ success: boolean; outputFile: string; error?: string }> {
@@ -54,12 +72,14 @@ export async function convertToSacredFrequency(
   try {
     const sampleRate = 44100;
     const ratio = targetFrequency / baseFrequency;
+    const tempoCorrection = baseFrequency / targetFrequency;
+    const atempoChain = buildAtempoChain(tempoCorrection);
 
     await execa("ffmpeg", [
       "-i",
       inputFile,
       "-af",
-      `asetrate=${sampleRate}*${ratio},aresample=${sampleRate},atempo=${baseFrequency}/${targetFrequency}`,
+      `asetrate=${sampleRate}*${ratio},aresample=${sampleRate},${atempoChain}`,
       "-y",
       outputFile,
     ]);
@@ -93,8 +113,9 @@ export async function convertAlbumToFrequency(
 
   for (const file of files) {
     const inputPath = `${inputDir}/${file}`;
-    const baseName = basename(file, file.endsWith(".mp3") ? ".mp3" : ".wav");
-    const outputPath = `${outputDir}/${baseName}-${targetFrequency}hz.mp3`;
+    const originalFormat = file.endsWith(".wav") ? ".wav" : ".mp3";
+    const baseName = basename(file, originalFormat);
+    const outputPath = `${outputDir}/${baseName}-${targetFrequency}hz${originalFormat}`;
 
     const result = await convertToSacredFrequency({
       inputFile: inputPath,
@@ -103,7 +124,7 @@ export async function convertAlbumToFrequency(
     });
 
     if (result.success) {
-      console.log(`✅ ${file} → ${baseName}-${targetFrequency}hz.mp3`);
+      console.log(`✅ ${file} → ${baseName}-${targetFrequency}hz${originalFormat}`);
     } else {
       console.error(`❌ Failed: ${file} - ${result.error}`);
     }
